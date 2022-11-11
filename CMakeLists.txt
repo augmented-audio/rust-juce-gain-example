@@ -22,6 +22,7 @@ juce_add_plugin(
 
         FORMATS AU VST3 Standalone
         PRODUCT_NAME "Gain plugin"
+        ICON_BIG ./icon.png
 )
 
 target_include_directories(

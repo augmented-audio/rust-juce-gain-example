@@ -7,6 +7,11 @@ pub struct JUCESimpleAudioBuffer {
     channels: Vec<*mut f32>,
 }
 
+#[repr(C)]
+pub struct JUCEParameters {
+    gain: f32,
+}
+
 #[no_mangle]
 pub extern "C" fn compatibility_audio_buffer__new(num_channels: usize, num_samples: usize) -> *mut JUCESimpleAudioBuffer {
     let buffer = JUCESimpleAudioBuffer {
@@ -38,9 +43,12 @@ pub extern "C" fn compatibility_audio_buffer__drop(buffer: *mut JUCESimpleAudioB
 }
 
 #[no_mangle]
-pub extern "C" fn gain__process_buffer(_buffer: *mut JUCESimpleAudioBuffer) {}
-
-#[no_mangle]
-pub extern "C" fn gain_process(input: f32) -> f32 {
-    input * 0.3
+pub extern "C" fn gain__process_buffer(parameters: JUCEParameters, buffer: *mut JUCESimpleAudioBuffer) {
+    let buffer = unsafe { &*buffer };
+    for channel_num in 0..buffer.num_channels {
+        let slice = unsafe { std::slice::from_raw_parts_mut(buffer.channels[channel_num], buffer.num_samples) };
+        for sample in slice {
+            *sample = *sample * parameters.gain;
+        }
+    }
 }

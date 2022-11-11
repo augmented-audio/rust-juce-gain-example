@@ -6,6 +6,10 @@
 
 struct JUCESimpleAudioBuffer;
 
+struct JUCEParameters {
+  float gain;
+};
+
 extern "C" {
 
 JUCESimpleAudioBuffer *compatibility_audio_buffer__new(uintptr_t num_channels,
@@ -17,8 +21,6 @@ void compatibility_audio_buffer__set_write_pointer(JUCESimpleAudioBuffer *buffer
 
 void compatibility_audio_buffer__drop(JUCESimpleAudioBuffer *buffer);
 
-void gain__process_buffer(JUCESimpleAudioBuffer *_buffer);
-
-float gain_process(float input);
+void gain__process_buffer(JUCEParameters parameters, JUCESimpleAudioBuffer *buffer);
 
 } // extern "C"

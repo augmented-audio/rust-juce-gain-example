@@ -1,5 +1,3 @@
-#include <gain.h>
-
 #include "PluginEditor.h"
 #include "PluginProcessor.h"
 
@@ -158,7 +156,10 @@ void GainPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
             static_cast<uintptr_t> (channelNum),
             buffer.getWritePointer (channelNum));
 
-        gain__process_buffer (rustBuffer);
+        JUCEParameters parameters = {
+                gain->get(),
+        };
+        gain__process_buffer (parameters, rustBuffer);
     }
 }
 
