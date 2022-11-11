@@ -1,6 +1,9 @@
 pub struct JUCESimpleAudioBuffer {
+    #[allow(unused)]
     num_channels: usize,
+    #[allow(unused)]
     num_samples: usize,
+    #[allow(unused)]
     channels: Vec<*mut f32>,
 }
 

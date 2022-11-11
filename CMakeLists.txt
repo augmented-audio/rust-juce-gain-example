@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.13)
+cmake_minimum_required(VERSION 3.14)
 
 project(gain_plugin VERSION 0.0.1)
 set(CMAKE_CXX_STANDARD 20)
@@ -23,6 +23,7 @@ juce_add_plugin(
         FORMATS AU VST3 Standalone
         PRODUCT_NAME "Gain plugin"
 )
+
 target_include_directories(
         GainPlugin
         PRIVATE
@@ -43,6 +44,20 @@ target_compile_definitions(
         JUCE_DISPLAY_SPLASH_SCREEN=0
 )
 
+if(${CMAKE_SYSTEM_NAME} STREQUAL "iOS")
+    set(
+            RUST_LIB
+            debug "${CMAKE_SOURCE_DIR}/target/aarch64-apple-ios/debug/libgain_plugin.a"
+            optimized "${CMAKE_SOURCE_DIR}/target/aarch64-apple-ios/release/libgain_plugin.a"
+    )
+else()
+    set(
+            RUST_LIB
+            debug "${CMAKE_SOURCE_DIR}/target/debug/libgain_plugin.a"
+            optimized "${CMAKE_SOURCE_DIR}/target/release/libgain_plugin.a"
+    )
+endif()
+
 target_link_libraries(
         GainPlugin
         PRIVATE
@@ -52,6 +67,5 @@ target_link_libraries(
         juce::juce_recommended_lto_flags
         juce::juce_recommended_warning_flags
 
-        debug "${CMAKE_SOURCE_DIR}/target/debug/libgain_plugin.a"
-        optimized "${CMAKE_SOURCE_DIR}/target/release/libgain_plugin.a"
+        ${RUST_LIB}
 )
