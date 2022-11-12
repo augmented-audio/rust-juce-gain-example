@@ -14,4 +14,4 @@ jobs:
       with:
         submodules: recursive
     - name: Build
-      run: zx ./scripts/build.mjs
+      run: npx zx ./scripts/build.mjs
