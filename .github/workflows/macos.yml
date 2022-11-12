@@ -14,4 +14,9 @@ jobs:
       with:
         submodules: recursive
     - name: Build
-      run: npx zx ./scripts/build.mjs
+      run: |
+        rustup target add aarch64-apple-darwin
+        rustup target add x86_64-apple-darwin
+        rustup target add aarch64-apple-ios
+
+        npx zx ./scripts/build.mjs
