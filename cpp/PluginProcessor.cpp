@@ -1,5 +1,5 @@
-#include "PluginEditor.h"
 #include "PluginProcessor.h"
+#include "PluginEditor.h"
 
 GainPluginAudioProcessor::GainPluginAudioProcessor ()
     : AudioProcessor (
@@ -10,14 +10,18 @@ GainPluginAudioProcessor::GainPluginAudioProcessor ()
 #endif
               .withOutput ("Output", juce::AudioChannelSet::stereo (), true)
 #endif
-      )
+              ),
+      gainContext (audio_processor_context__init ())
 {
     gain = new juce::AudioParameterFloat (
         juce::ParameterID ("gain", 1), "Gain", 0.0, 1.0, 0.0);
     addParameter (gain);
 }
 
-GainPluginAudioProcessor::~GainPluginAudioProcessor () = default;
+GainPluginAudioProcessor::~GainPluginAudioProcessor ()
+{
+    audio_processor_context__drop (gainContext);
+}
 
 const juce::String GainPluginAudioProcessor::getName () const
 {
@@ -102,8 +106,11 @@ void GainPluginAudioProcessor::releaseResources ()
 {
     // When playback stops, you can use this as an opportunity to free up any
     // spare memory, etc.
-    compatibility_audio_buffer__drop (rustBuffer);
-    rustBuffer = nullptr;
+    if (rustBuffer != nullptr)
+    {
+        compatibility_audio_buffer__drop (rustBuffer);
+        rustBuffer = nullptr;
+    }
 }
 
 bool GainPluginAudioProcessor::isBusesLayoutSupported (
@@ -157,9 +164,10 @@ void GainPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
             buffer.getWritePointer (channelNum));
 
         JUCEParameters parameters = {
-                gain->get(),
+            gain->get (),
         };
-        gain__process_buffer (parameters, rustBuffer);
+        audio_processor_context__process_buffer (
+            gainContext, parameters, rustBuffer);
     }
 }
 

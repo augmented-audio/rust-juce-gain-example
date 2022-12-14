@@ -4,6 +4,8 @@
 #include <ostream>
 #include <new>
 
+struct JUCEAudioProcessorContext;
+
 struct JUCESimpleAudioBuffer;
 
 struct JUCEParameters {
@@ -11,6 +13,14 @@ struct JUCEParameters {
 };
 
 extern "C" {
+
+JUCEAudioProcessorContext *audio_processor_context__init();
+
+void audio_processor_context__drop(JUCEAudioProcessorContext *context);
+
+void audio_processor_context__process_buffer(JUCEAudioProcessorContext *context,
+                                             JUCEParameters parameters,
+                                             JUCESimpleAudioBuffer *buffer);
 
 JUCESimpleAudioBuffer *compatibility_audio_buffer__new(uintptr_t num_channels,
                                                        uintptr_t num_samples);
@@ -20,7 +30,5 @@ void compatibility_audio_buffer__set_write_pointer(JUCESimpleAudioBuffer *buffer
                                                    float *write_pointer);
 
 void compatibility_audio_buffer__drop(JUCESimpleAudioBuffer *buffer);
-
-void gain__process_buffer(JUCEParameters parameters, JUCESimpleAudioBuffer *buffer);
 
 } // extern "C"

@@ -8,6 +8,9 @@ crate-type = ["staticlib"]
 
 [dependencies]
 audio-processor-traits = "2.2.0"
+wisual-logger = "0.1"
+log = "0.4"
+vst = "0.3.0"
 
 [build-dependencies]
 cbindgen = "0.24.3"

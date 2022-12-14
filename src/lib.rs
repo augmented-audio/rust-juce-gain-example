@@ -1,54 +1,67 @@
-pub struct JUCESimpleAudioBuffer {
-    #[allow(unused)]
-    num_channels: usize,
-    #[allow(unused)]
-    num_samples: usize,
-    #[allow(unused)]
-    channels: Vec<*mut f32>,
-}
+use audio_processor_traits::audio_buffer::vst::VSTBufferHandler;
+use audio_processor_traits::{AudioBuffer, AudioProcessor};
+pub use juce::*;
 
-#[repr(C)]
-pub struct JUCEParameters {
+mod juce;
+
+pub struct GainProcessor {
     gain: f32,
 }
 
+impl AudioProcessor for GainProcessor {
+    type SampleType = f32;
+
+    fn process<BufferType: AudioBuffer<SampleType=Self::SampleType>>(&mut self, data: &mut BufferType) {
+        for frame in data.frames_mut() {
+            for channel in frame {
+                *channel *= self.gain;
+            }
+        }
+    }
+}
+
+pub struct JUCEAudioProcessorContext {
+    processor: GainProcessor,
+    handler: VSTBufferHandler<f32>
+}
+
 #[no_mangle]
-pub extern "C" fn compatibility_audio_buffer__new(num_channels: usize, num_samples: usize) -> *mut JUCESimpleAudioBuffer {
-    let buffer = JUCESimpleAudioBuffer {
-        num_channels,
-        num_samples,
-        channels: {
-            let mut v = Vec::with_capacity(num_channels);
-            v.resize(num_channels, 0 as *mut f32);
-            v
-        },
+pub extern "C" fn audio_processor_context__init() -> *mut JUCEAudioProcessorContext {
+    wisual_logger::init_from_env();
+    log::info!("GainPlugin - Initializing");
+
+    let processor = GainProcessor {
+        gain: 1.0,
     };
-    Box::into_raw(Box::new(buffer))
+    let ctx = JUCEAudioProcessorContext {
+        processor,
+        handler: VSTBufferHandler::new(),
+    };
+    Box::into_raw(Box::new(ctx))
 }
 
 #[no_mangle]
-pub extern "C" fn compatibility_audio_buffer__set_write_pointer(buffer: *mut JUCESimpleAudioBuffer, channel: usize, write_pointer: *mut f32) {
-    unsafe {
-        let buffer = &mut (*buffer);
-        if channel >= buffer.channels.len() {
-            buffer.channels.resize(channel + 1, std::ptr::null_mut());
-        }
-        buffer.channels[channel] = write_pointer;
-    }
+pub extern "C" fn audio_processor_context__drop(context: *mut JUCEAudioProcessorContext) {
+    let _ = unsafe { Box::from_raw(context) };
 }
 
 #[no_mangle]
-pub extern "C" fn compatibility_audio_buffer__drop(buffer: *mut JUCESimpleAudioBuffer) {
-    let _ = unsafe { Box::from_raw(buffer) };
-}
+pub extern "C" fn audio_processor_context__process_buffer(context: &mut JUCEAudioProcessorContext, parameters: JUCEParameters, buffer: *mut JUCESimpleAudioBuffer) {
+    let mut buffer = unsafe {
+        let buffer = &*buffer;
+        vst::buffer::AudioBuffer::from_raw(
+            buffer.num_channels,
+            buffer.num_channels,
+            buffer.channels.as_ptr() as *const *const f32,
+            buffer.channels.as_ptr() as *mut *mut f32,
+            buffer.num_samples
+        )
+    };
 
-#[no_mangle]
-pub extern "C" fn gain__process_buffer(parameters: JUCEParameters, buffer: *mut JUCESimpleAudioBuffer) {
-    let buffer = unsafe { &*buffer };
-    for channel_num in 0..buffer.num_channels {
-        let slice = unsafe { std::slice::from_raw_parts_mut(buffer.channels[channel_num], buffer.num_samples) };
-        for sample in slice {
-            *sample = *sample * parameters.gain;
-        }
-    }
+    let processor = &mut context.processor;
+    processor.gain = parameters.gain;
+    let handler = &mut context.handler;
+    handler.with_buffer(&mut buffer, |buffer| {
+        processor.process(buffer);
+    });
 }
