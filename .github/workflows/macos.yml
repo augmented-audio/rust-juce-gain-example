@@ -21,3 +21,18 @@ jobs:
         rustup target add aarch64-apple-ios-sim
 
         npx zx ./scripts/build.mjs
+    - name: Upload app
+      uses: actions/upload-artifact@v3
+      with:
+        name: StandaloneApp.app
+        path: ./target/cmake-build-debug/*_artefacts/Debug/Standalone/*.app
+    - name: Upload VST
+      uses: actions/upload-artifact@v3
+      with:
+        name: Plugin.vst3
+        path: ./target/cmake-build-debug/*_artefacts/Debug/VST3/*.vst3
+    - name: Upload AU
+      uses: actions/upload-artifact@v3
+      with:
+        name: Plugin.component
+        path: ./target/cmake-build-debug/*_artefacts/Debug/AU/*.component
